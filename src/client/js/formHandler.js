@@ -1,18 +1,51 @@
-export { handleSubmit };
+import { isValidUrl } from "./isValidUrl";
 
-function handleSubmit(event) {
+export { handleSubmit, getResponse };
+
+const spinner = document.getElementById("spinner");
+const resultText = document.getElementById("results");
+
+async function getResponse(postData) {
+  // console.log(postData);
+  const response = await fetch("http://localhost:8081/analyze", {
+    method: "POST",
+    credentials: "same-origin",
+    mode: "cors",
+    body: JSON.stringify(postData),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  }).then(response => response.json());
+
+  return response;
+}
+
+async function updateUi(data) {
+  // console.log(data);
+  spinner.style.visibility = "hidden";
+  resultText.innerHTML =
+    "Agreement: " +
+    data.agreement +
+    "\tScore Tag: " +
+    data.score_tag +
+    "\tSubjectivity: " +
+    data.subjectivity;
+}
+
+async function handleSubmit(event) {
   event.preventDefault();
+  resultText.innerHTML = "";
+  let formText = document.getElementById("url").value;
 
-  // check what text was put into the form field
-  let formText = document.getElementById("name").value;
-  Client.checkForName(formText);
-
-  console.log("::: Form Submitted :::");
-  fetch("http://localhost:8081/test")
-    .then(res => res.json())
-    .then(function(data) {
-      document.getElementById("results").innerHTML = data.message;
-    });
+  if (!isValidUrl(formText)) {
+    alert("url invalid");
+    return;
+  }
+  spinner.style.visibility = "visible";
+  let postData = {
+    url: formText
+  };
+  await getResponse(postData).then(data => updateUi(data));
 }
 
 export { handleSubmit }
